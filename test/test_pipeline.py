@@ -6,14 +6,24 @@ sys.path.append("..")
 from utils import missing_values_table
 
 def test_missing_values_table():
-    data=pd.DataFrame({"toto":[1,2,3,4,5],
-                       "tata":[1,2,3,4,5]})
-    resultat=missing_values_table(data)
-    resultat=resultat.reset_index(drop=True)
-    print(resultat)
-    expected=pd.DataFrame(columns=["Missing Values", "% of Total Values"])
-    print(expected)
-    pd.testing.assert_frame_equal(resultat, expected)
+    # Création d'un DataFrame de test avec des valeurs manquantes
+    data = pd.DataFrame({
+        "col1": [1, 2, None, None, 5],   # 40% de NaN
+        "col2": [None, None, None, 4, 5],  # 60% de NaN (doit être détecté)
+        "col3": [1, 2, 3, 4, 5],   # Pas de NaN
+    })
+
+    # Exécution de la fonction
+    result = missing_values_table(data, threshold=50)
+
+    # Résultat attendu
+    expected = pd.DataFrame({
+        "% Missing": [60.0, 40.0],
+        "Above Threshold": [True, False]
+    }, index=["col2", "col1"])  # L'index doit correspondre aux colonnes concernées
+
+    # Comparaison
+    pd.testing.assert_frame_equal(result, expected)
 
 # # Définir une fixture pytest pour charger app_train
 # @pytest.fixture
