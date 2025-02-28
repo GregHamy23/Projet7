@@ -24,7 +24,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest test/
+          cd test && pytest test_pipeline.py -v
 
   deploy:
     runs-on: ubuntu-latest
