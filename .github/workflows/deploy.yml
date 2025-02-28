@@ -24,7 +24,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/
+          pytest test/
 
   deploy:
     runs-on: ubuntu-latest
