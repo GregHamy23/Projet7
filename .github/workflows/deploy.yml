@@ -1,5 +1,4 @@
-name: Render CLI Deploy
-run-name: Deploying via Render CLI
+name: Deploy API
 
 on:
   push:
@@ -7,21 +6,34 @@ on:
       - main
 
 jobs:
-  Deploy-Render:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Render CLI
-        run: |
-          curl -L https://github.com/render-oss/cli/releases/download/v1.1.0/cli_1.1.0_linux_amd64.zip -o render.zip
-          unzip render.zip
-          sudo mv cli_v1.1.0 /usr/local/bin/render
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
 
-      - name: Trigger deploy with Render CLI
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          CI: true
+      - name: Install dependencies
         run: |
-          render deploys create ${{ secrets.RENDER_SERVICE_ID }} --output json --confirm
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          cd test && pytest test_pipeline.py -v
+
+  deploy:
+    name: Deploy
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with : 
+          service-id : ${{ secrets.SERVICE_ID }}
+          api-key : ${{ secrets.RENDER_API_KEY }}
