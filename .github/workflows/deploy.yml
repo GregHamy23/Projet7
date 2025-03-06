@@ -3,7 +3,7 @@ name: Deploy API
 on:
   push:
     branches:
-      - main  
+      - main
 
 jobs:
   build:
@@ -25,15 +25,16 @@ jobs:
       - name: Run tests
         run: |
           cd test && pytest test_pipeline.py -v
-  
-  deploy : 
-    name : Deploy
-    needs : [test]
-    runs-on : ubuntu-latest
-    
-    steps : 
-      - name : Deploy to production 
-        uses : actions/checkout@v3
-        with : 
-          service_id : ${{ secrets.SERVICE_ID }}
-          api-key : $ {{ secrets.RENDER_API_KEY }}
+
+  deploy:
+    name: Deploy
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to production
+        run: |
+          render deploy --service-id ${{ secrets.SERVICE_ID }} --api-key ${{ secrets.RENDER_API_KEY }}
