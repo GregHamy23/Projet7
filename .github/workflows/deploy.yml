@@ -35,6 +35,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install Render CLI
+        run: |
+          curl -L https://render.com/downloads/render-linux-amd64 -o render
+          chmod +x render
+          sudo mv render /usr/local/bin/
+
       - name: Deploy to production
         run: |
           render deploy --service-id ${{ secrets.SERVICE_ID }} --api-key ${{ secrets.RENDER_API_KEY }}
