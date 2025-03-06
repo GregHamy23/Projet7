@@ -35,5 +35,5 @@ jobs:
       - name : Deploy to production 
         uses : actions/checkout@v3
         with : 
-          service_id : ${{ secrects.SERVICE_ID }}
+          service_id : ${{ secrets.SERVICE_ID }}
           api-key : $ {{ secrets.RENDER_API_KEY }}
