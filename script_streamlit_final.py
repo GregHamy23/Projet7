@@ -14,7 +14,6 @@ from sklearn.model_selection import KFold
 import lightgbm as lgb
 import gc
 import mlflow
-import boto3
 
 # Titre de l'application
 st.title('Application de Prédiction remboursement de prêt')
