@@ -8,3 +8,4 @@ lime
 pytest
 streamlit
 evidently
+boto3
