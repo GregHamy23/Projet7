@@ -23,7 +23,7 @@ s3 = boto3.client('s3')
 s3 = boto3.client(
     's3',
     aws_access_key_id='AKIA2OAJTZWE5H7OB2HK',
-    aws_secret_access_key='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'
+    aws_secret_access_key='o7wNLaEaLJVZLuZ9UzIJedbIIiuNDp6Twb2rOiXd')
 
 # Titre de l'application
 st.title('Application de Prédiction remboursement de prêt')
