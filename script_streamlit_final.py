@@ -40,6 +40,29 @@ if uploaded_file is not None:
     # Configurer MLflow pour utiliser le serveur distant avec les identifiants spécifiés
     mlflow.set_tracking_uri("http://ec2-51-20-85-239.eu-north-1.compute.amazonaws.com:5000/")
 
+        # Run ID
+    run_id = "2c7d72ff06314a02b8d516519a1fcb6f"
+
+    # Charger le modèle qui contient tous les encoders
+    encoders_model_uri = f"runs:/{run_id}/label_encoders"
+    encoders = mlflow.sklearn.load_model(encoders_model_uri)
+
+    # Appliquer l'encoding
+    le_count = 0
+
+    for col, encoder in encoders.items():
+        if col in test_df.columns:
+            try:
+                # Transformer les données
+                test_df[col] = encoder.transform(test_df[col])
+                # Incrémenter le compteur
+                le_count += 1
+            except Exception as e:
+                # Afficher l'erreur dans le notebook
+                print(f"Erreur lors du chargement de l'encoder pour la colonne {col}: {e}")
+
+    # One-hot encoding
+    test_df = pd.get_dummies(test_df)
     def preprocess_data(features, encoding='ohe'):
 
         # Extract the ids
