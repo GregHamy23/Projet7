@@ -5,6 +5,12 @@ import seaborn as sns
 import mlflow.sklearn
 import boto3
 
+# Accéder aux variables d'environnement
+bucket_name = st.secrets["aws"]["bucket_name"]
+aws_access_key_id = st.secrets["aws"]["aws_access_key_id"]
+aws_secret_access_key = st.secrets["aws"]["aws_secret_access_key"]
+aws_default_region = st.secrets["aws"]["aws_default_region"]
+
 # Configurer MLflow pour utiliser le serveur distant
 mlflow.set_tracking_uri("http://ec2-51-20-85-239.eu-north-1.compute.amazonaws.com:5000/")
 
