@@ -9,3 +9,4 @@ pytest
 streamlit
 evidently
 boto3
+s3fs==2023.6.0
