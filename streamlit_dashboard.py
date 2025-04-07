@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import mlflow.sklearn
+import boto3
 
 # Configurer MLflow pour utiliser le serveur distant
 mlflow.set_tracking_uri("http://ec2-51-20-85-239.eu-north-1.compute.amazonaws.com:5000/")
