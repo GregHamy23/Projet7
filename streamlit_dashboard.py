@@ -2,27 +2,24 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pickle
 import mlflow.sklearn
 
-# Accéder aux variables d'environnement
-bucket_name = st.secrets["aws"]["bucket_name"]
-aws_access_key_id = st.secrets["aws"]["aws_access_key_id"]
-aws_secret_access_key = st.secrets["aws"]["aws_secret_access_key"]
-aws_default_region = st.secrets["aws"]["aws_default_region"]
+# Charger le modèle depuis le fichier Pickle
+with open('GBmodel.pkl', 'rb') as model_file:
+    loaded_model = pickle.load(model_file)
 
-# Configurer MLflow pour utiliser le serveur distant
-mlflow.set_tracking_uri("http://ec2-51-20-85-239.eu-north-1.compute.amazonaws.com:5000/")
+# Charger les encodeurs depuis le fichier Pickle
+with open('all_encoders.pkl', 'rb') as encoders_file:
+    encoders = pickle.load(encoders_file)
 
 # Charger les données
 data = pd.read_csv('results.csv')
 
-# Modèle à récupérer
-model_name = "GradientBoosting"
-model_version = 3
-
-# Récupérer le modèle depuis MLflow
-model_uri = f"models:/{model_name}/{model_version}"
-loaded_model = mlflow.sklearn.load_model(model_uri)
+# Appliquer l'encoding aux colonnes spécifiées
+for col, encoder in encoders.items():
+    if col in data.columns:
+        data[col] = encoder.transform(data[col])
 
 # Interface utilisateur
 st.title("Tableau de Bord Interactif des Clients")
