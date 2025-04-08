@@ -10,17 +10,8 @@ import boto3
 with open('GBmodel.pkl', 'rb') as model_file:
     loaded_model = pickle.load(model_file)
 
-# Charger les encodeurs depuis le fichier Pickle
-with open('all_encoders.pkl', 'rb') as encoders_file:
-    encoders = pickle.load(encoders_file)
-
 # Charger les données
 data = pd.read_csv('results.csv')
-
-# Appliquer l'encoding aux colonnes spécifiées
-for col, encoder in encoders.items():
-    if col in data.columns:
-        data[col] = encoder.transform(data[col])
 
 # Interface utilisateur
 st.title("Tableau de Bord Interactif des Clients")
