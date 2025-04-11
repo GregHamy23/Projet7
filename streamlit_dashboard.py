@@ -3,8 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
+import shap
 import mlflow.sklearn
 import boto3
+
 
 # Charger le modèle depuis le fichier Pickle
 with open('GBmodel.pkl', 'rb') as model_file:
@@ -13,8 +15,11 @@ with open('GBmodel.pkl', 'rb') as model_file:
 # Charger les données
 data = pd.read_csv('results.csv')
 
+# Initialiser l'explainer SHAP pour le modèle
+explainer = shap.Explainer(loaded_model, data.drop(columns=['SK_ID_CURR', 'PREDICTION', 'PREDICTION_PROBA']))
+
 # Interface utilisateur
-st.title("Tableau de Bord Interactif des Clients")
+st.title("Tableau de Bord Credit Scoring")
 
 # Sélection du client
 client_id = st.selectbox("Sélectionnez un client", data['SK_ID_CURR'])
@@ -30,8 +35,28 @@ st.subheader("Probabilité et Éligibilité")
 # Extraire la probabilité
 probability = client_info['PREDICTION_PROBA'].values[0]
 
-# Afficher la probabilité
+# Inverser la probabilité pour la jauge
+inverted_probability = 1 - probability
+
+# Afficher la probabilité avec une jauge colorée
 st.metric(label="Probabilité de non remboursement", value=f"{probability:.2%}")
+
+# Jauge personnalisée avec HTML/CSS
+if inverted_probability >= 0.75:
+    color = 'green'
+elif inverted_probability >= 0.5:
+    color = 'orange'
+else:
+    color = 'red'
+
+progress_html = f"""
+<div style="width:100%; background-color:#e0e0e0; border-radius:5px; overflow:hidden;">
+    <div style="width:{int(inverted_probability * 100)}%; background-color:{color}; color:white; text-align:center; padding:10px 0; border-radius:5px;">
+        {int(probability * 100)}%
+    </div>
+</div>
+"""
+st.markdown(progress_html, unsafe_allow_html=True)
 
 # Déterminer l'éligibilité et afficher avec couleur
 if probability >= 0.5:
@@ -41,19 +66,35 @@ else:
     st.markdown("<p style='color: green; font-weight: bold;'>Éligible à un prêt</p>", unsafe_allow_html=True)
     st.write("La probabilité de non remboursement de prêt est inférieure à 50%, ce qui indique que le client est éligible à un prêt.")
 
+# Visualisation de l'importance des features
+st.subheader("Importance des Features")
+
+# Calculer les valeurs SHAP pour le client sélectionné
+shap_values = explainer(client_info.drop(columns=['SK_ID_CURR', 'PREDICTION', 'PREDICTION_PROBA']))
+
+# Afficher l'importance locale des features
+fig, ax = plt.subplots()
+shap.plots.waterfall(shap_values[0], show=False)
+st.pyplot(fig)
+
+# Afficher l'importance globale des features
+fig, ax = plt.subplots()
+shap.plots.bar(shap_values, show=False)
+st.pyplot(fig)
+
 # Ajouter un graphique pour comparer la probabilité du client sélectionné avec les autres
-plt.figure(figsize=(10, 6))
-sns.histplot(data['PREDICTION_PROBA'], kde=True, bins=30, color='blue')
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.histplot(data['PREDICTION_PROBA'], kde=True, bins=30, color='blue', ax=ax)
 
 # Ajouter une ligne verticale pour la probabilité du client sélectionné
 client_probability = client_info['PREDICTION_PROBA'].values[0]
-plt.axvline(x=client_probability, color='red', linestyle='--', label=f'Probabilité du Client {client_id}')
+ax.axvline(x=client_probability, color='red', linestyle='--', label=f'Probabilité du Client {client_id}')
 
-plt.title("Comparaison de la Probabilité du Client avec les Autres Clients")
-plt.xlabel("Probabilité")
-plt.ylabel("Fréquence")
-plt.legend()
-st.pyplot(plt)
+ax.set_title("Comparaison de la Probabilité du Client avec les Autres Clients")
+ax.set_xlabel("Probabilité")
+ax.set_ylabel("Fréquence")
+ax.legend()
+st.pyplot(fig)
 
 # Afficher les statistiques descriptives
 st.subheader("Statistiques Descriptives du Client")
@@ -70,30 +111,42 @@ if features_to_compare:
     comparison_data = data[features_to_compare]
 
     # Créer un graphique de comparaison avec boxplot
-    plt.figure(figsize=(10, 6))
-    sns.boxplot(data=comparison_data)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.boxplot(data=comparison_data, ax=ax)
 
     # Ajouter des annotations pour le client sélectionné
     for feature in features_to_compare:
         client_value = client_info[feature].values[0]
-        plt.axvline(x=client_value, color='red', linestyle='--', label=f'Client {client_id}')
+        ax.axvline(x=client_value, color='red', linestyle='--', label=f'Client {client_id}')
 
-    plt.title(f"Comparaison des caractéristiques pour le client {client_id}")
-    plt.legend()
-    st.pyplot(plt)
+    ax.set_title(f"Comparaison des caractéristiques pour le client {client_id}")
+    ax.legend()
+    st.pyplot(fig)
 
-    # Optionnel : Ajouter un graphique de distribution avec histplot
-    plt.figure(figsize=(10, 6))
-    sns.histplot(data=comparison_data, kde=True)
+    # Ajouter un graphique de distribution avec histplot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.histplot(data=comparison_data, kde=True, ax=ax)
 
     # Ajouter des annotations pour le client sélectionné
     for feature in features_to_compare:
         client_value = client_info[feature].values[0]
-        plt.axvline(x=client_value, color='red', linestyle='--', label=f'Client {client_id}')
+        ax.axvline(x=client_value, color='red', linestyle='--', label=f'Client {client_id}')
 
-    plt.title(f"Distribution des caractéristiques pour le client {client_id}")
-    plt.legend()
-    st.pyplot(plt)
+    ax.set_title(f"Distribution des caractéristiques pour le client {client_id}")
+    ax.legend()
+    st.pyplot(fig)
+
+# Graphique d’analyse bi-variée
+st.subheader("Analyse Bi-variée")
+feature_1 = st.selectbox("Sélectionnez la première caractéristique", data.columns)
+feature_2 = st.selectbox("Sélectionnez la deuxième caractéristique", data.columns)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+sns.scatterplot(x=data[feature_1], y=data[feature_2], ax=ax)
+ax.set_title(f"Analyse bi-variée entre {feature_1} et {feature_2}")
+ax.set_xlabel(feature_1)
+ax.set_ylabel(feature_2)
+st.pyplot(fig)
 
 # Fonctionnalités optionnelles
 st.sidebar.title("Nouvelle simulation")
