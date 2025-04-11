@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import shap
+import mlflow.sklearn
+import boto3
+
 
 # Charger le modèle depuis le fichier Pickle
 with open('GBmodel.pkl', 'rb') as model_file:
