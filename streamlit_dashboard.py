@@ -16,6 +16,7 @@ data = pd.read_csv('results.csv')
 explainer = shap.Explainer(loaded_model, data.drop(columns=['SK_ID_CURR', 'PREDICTION', 'PREDICTION_PROBA']))
 
 # Interface utilisateur
+st.set_page_config(page_title="Tableau de Bord Credit Scoring")
 st.title("Tableau de Bord Credit Scoring")
 
 # Sélection du client
@@ -41,15 +42,18 @@ st.metric(label="Probabilité de non remboursement", value=f"{probability:.2%}")
 # Jauge personnalisée avec HTML/CSS
 if inverted_probability >= 0.75:
     color = 'green'
+    status = "Faible risque"
 elif inverted_probability >= 0.5:
     color = 'orange'
+    status = "Risque modéré"
 else:
     color = 'red'
+    status = "Haut risque"
 
 progress_html = f"""
 <div style="width:100%; background-color:#e0e0e0; border-radius:5px; overflow:hidden;">
     <div style="width:{int(inverted_probability * 100)}%; background-color:{color}; color:white; text-align:center; padding:10px 0; border-radius:5px;">
-        {int(probability * 100)}%
+        {int(probability * 100)}% - {status}
     </div>
 </div>
 """
